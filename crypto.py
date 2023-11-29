@@ -58,104 +58,61 @@ crypto.com
 
 coinmarked
 {
-"data": [
-{
-"id": 1,
-"name": "Bitcoin",
-"symbol": "BTC",
-"slug": "bitcoin",
-"cmc_rank": 5,
-"num_market_pairs": 500,
-"circulating_supply": 16950100,
-"total_supply": 16950100,
-"max_supply": 21000000,
-"infinite_supply": false,
-"last_updated": "2018-06-02T22:51:28.209Z",
-"date_added": "2013-04-28T00:00:00.000Z",
-"tags": [
-"mineable"
-],
-"platform": null,
-"self_reported_circulating_supply": null,
-"self_reported_market_cap": null,
-"quote": {
-"USD": {
-"price": 9283.92,
-"volume_24h": 7155680000,
-"volume_change_24h": -0.152774,
-"percent_change_1h": -0.152774,
-"percent_change_24h": 0.518894,
-"percent_change_7d": 0.986573,
-"market_cap": 852164659250.2758,
-"market_cap_dominance": 51,
-"fully_diluted_market_cap": 952835089431.14,
-"last_updated": "2018-08-09T22:53:32.000Z"
-},
-"BTC": {
-"price": 1,
-"volume_24h": 772012,
-"volume_change_24h": 0,
-"percent_change_1h": 0,
-"percent_change_24h": 0,
-"percent_change_7d": 0,
-"market_cap": 17024600,
-"market_cap_dominance": 12,
-"fully_diluted_market_cap": 952835089431.14,
-"last_updated": "2018-08-09T22:53:32.000Z"
-}
-}
-},
-{
-"id": 1027,
-"name": "Ethereum",
-"symbol": "ETH",
-"slug": "ethereum",
-"num_market_pairs": 6360,
-"circulating_supply": 16950100,
-"total_supply": 16950100,
-"max_supply": 21000000,
-"infinite_supply": false,
-"last_updated": "2018-06-02T22:51:28.209Z",
-"date_added": "2013-04-28T00:00:00.000Z",
-"tags": [
-"mineable"
-],
-"platform": null,
-"quote": {
-"USD": {
-"price": 1283.92,
-"volume_24h": 7155680000,
-"volume_change_24h": -0.152774,
-"percent_change_1h": -0.152774,
-"percent_change_24h": 0.518894,
-"percent_change_7d": 0.986573,
-"market_cap": 158055024432,
-"market_cap_dominance": 51,
-"fully_diluted_market_cap": 952835089431.14,
-"last_updated": "2018-08-09T22:53:32.000Z"
-},
-"ETH": {
-"price": 1,
-"volume_24h": 772012,
-"volume_change_24h": -0.152774,
-"percent_change_1h": 0,
-"percent_change_24h": 0,
-"percent_change_7d": 0,
-"market_cap": 17024600,
-"market_cap_dominance": 12,
-"fully_diluted_market_cap": 952835089431.14,
-"last_updated": "2018-08-09T22:53:32.000Z"
-}
-}
-}
-],
-"status": {
-"timestamp": "2018-06-02T22:51:28.209Z",
-"error_code": 0,
-"error_message": "",
-"elapsed": 10,
-"credit_count": 1
-}
+  "coins":[
+    {
+      "id":"bitcoin",
+      "icon":"https://static.coinstats.app/coins/1650455588819.png",
+      "name":"Bitcoin",
+      "symbol":"BTC",
+      "rank":1,
+      "price":38088.489986110195,
+      "priceBtc":1,
+      "volume":28785931198.131104,
+      "marketCap":744864451972.8088,
+      "availableSupply":19556156,
+      "totalSupply":21000000,
+      "priceChange1h":-0.25,
+      "priceChange1d":2.46,
+      "priceChange1w":3.87,
+      "websiteUrl":"http://www.bitcoin.org",
+      "twitterUrl":"https://twitter.com/bitcoin",
+      "exp":  [
+        "https://blockchair.com/bitcoin/",
+        "https://btc.com/",
+        "https://btc.tokenview.io/",
+        "https://www.oklink.com/btc",
+        "https://3xpl.com/bitcoin"
+        ]
+    },
+    {
+      "id":"ethereum",
+      "icon":"https://static.coinstats.app/coins/1650455629727.png",
+      "name":"Ethereum",
+      "symbol":"ETH",
+      "rank":2,
+      "price":2054.546067419952,
+      "priceBtc":0.05395806846465616,
+      "volume":11847694015.54524,
+      "marketCap":247037729528.12784,
+      "availableSupply":120239567,
+      "totalSupply":120239567,
+      "priceChange1h":-0.31,
+      "priceChange1d":1.49,
+      "priceChange1w":1.45,
+      "websiteUrl":"https://www.ethereum.org/",
+      "twitterUrl":"https://twitter.com/ethereum",
+      "contractAddress":"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+      "decimals":18,
+      "exp":  [
+        "https://etherscan.io/",
+        "https://ethplorer.io/",
+        "https://blockchair.com/ethereum",
+        "https://eth.tokenview.io/",
+        "https://www.oklink.com/eth",
+        "https://3xpl.com/ethereum"
+        ]
+    }
+  ]
 }
 """
 
