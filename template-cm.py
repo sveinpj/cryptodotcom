@@ -56,7 +56,7 @@ class CoinCollector():
       log.info('collecting...')
       # query the api
       response = self.client.tickers()
-      metric = Metric('coin_market', 'coinmarketcap metric values', 'gauge')
+      metric = Metric('coin_market', 'coinmarketcap metric values', 'gauge')  # Create a Gauge metric (Check class)
       """
       METRIC_TYPES = (
       'counter', 'gauge', 'summary', 'histogram',
