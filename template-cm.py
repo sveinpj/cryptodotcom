@@ -68,7 +68,7 @@ class CoinCollector():
       else:
         for value in response['data']:
           for that in ['cmc_rank', 'total_supply', 'max_supply', 'circulating_supply']:
-            coinmarketmetric = '_'.join(['coin_market', that])
+            coinmarketmetric = '_'.join(['coin_market', that]) # coin_market_cmc_rank
             if value[that] is not None:
               metric.add_sample(coinmarketmetric, value=float(value[that]), labels={'id': value['slug'], 'name': value['name'], 'symbol': value['symbol']})
           for price in ['USD']:

@@ -145,11 +145,39 @@ cache = TTLCache(maxsize=10000, ttl=cache_ttl)
 #     return informations['result']['data'][-1]
 
 def get_ticker(instrument_name):
+    metric = Metric('coin_market', 'coinmarketcap metric values', 'gauge')
     informations = requests.get(BASE_URL + "public/get-ticker?instrument_name=" + instrument_name)
     informations = json.loads(informations.text)
-    return informations['result']['data'][-1]
+    id = informations['id']
+    method = informations['method']
+    code = informations['code']
+    data = informations['result']['data'][-1]
+    for price in ['USD']:
+      for that in ['a', 'v', 'i']:
+        coinmarketmetric = '_'.join(['coin_market', that, price]).lower()
+        metric.add_sample(coinmarketmetric, value=float(data['h']), labels={'id': data['i']})
+    yield metric
+      # h = data['h']
+      # l = data['l']
+      # a = data['a']
+      # i = data['i']
+      # v = data['v']
+      # vv = data['vv']
+      # c = data['c']
+      # b = data['b']
+      # k = data['k']
+      # t = data['t']
+    # for item in informations:
+    #   print (item)
+    # return informations['result']['data'][-1]
 
+def simpleticker():
+    btc_usd = get_ticker("BTC_USD")
+    #print (btc_usd)
+    # print (btc_usd)
 
+# simpleticker()
+# exit(0)
 
 def get_instruments():
     # headers = {
@@ -172,10 +200,6 @@ def get_instruments():
            print (latest_ticker)
         #    latest_candlestick = get_candlestick(symbol,"M5")
         #    print(latest_candlestick)
-def simpleticker():
-    btc_usd = get_ticker("BTC_USD")
-    print (btc_usd)
-simpleticker()
 
 class CoinCollector():
   def __init__(self):
@@ -184,9 +208,20 @@ class CoinCollector():
 #     self.client = CoinClient()
   def collect(self):
      with lock:
-      log.info('collecting...')
-      btc_usd = get_ticker("BTC_USD")
-      print (btc_usd)
+      instrument_name = "BTC_USD"
+      metric = Metric('coin_market', 'coinmarketcap metric values', 'gauge')
+      informations = requests.get(BASE_URL + "public/get-ticker?instrument_name=" + instrument_name)
+      informations = json.loads(informations.text)
+      id = informations['id']
+      method = informations['method']
+      code = informations['code']
+      data = informations['result']['data'][-1]
+      for price in ['USD']:
+        for that in ['a', 'v', 'i']:
+          coinmarketmetric = '_'.join(['coin_market', that, price]).lower()
+          metric.add_sample(coinmarketmetric, value=float(data['h']), labels={'id': data['i']})
+          print (metric)
+      yield metric
 #       response = self.client.tickers()
 #       metric = Metric('coin_market', 'coinmarketcap metric values', 'gauge')
 if __name__ == '__main__':
@@ -197,7 +232,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     log.info('listening on http://%s:%d/metrics' % (args.addr, args.port))
 
-    # REGISTRY.register(CoinCollector())
+    REGISTRY.register(CoinCollector())
     start_http_server(int(args.port), addr=args.addr)
 
     while True:
