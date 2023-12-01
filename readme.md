@@ -33,6 +33,55 @@ crypto_com_current_best_ask{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCU
 
 
 
+{
+    "id": "1839",
+    "name": "BNB",
+    "symbol": "BNB",
+    "slug": "bnb",
+    "num_market_pairs": "1801",
+    "date_added": "2017-07-25T00:00:00.000Z",
+    "tags": [
+        "marketplace",
+        "centralized-exchange",
+        "payments",
+        "smart-contracts",
+        "alameda-research-portfolio",
+        "multicoin-capital-portfolio",
+        "bnb-chain",
+        "layer-1",
+        "sec-security-token",
+        "alleged-sec-securities",
+        "celsius-bankruptcy-estate"
+    ],
+    "max_supply": "None",
+    "circulating_supply": "151698717.19122392",
+    "total_supply": "151698717.19122392",
+    "infinite_supply": "False",
+    "platform": "None",
+    "cmc_rank": "4",
+    "self_reported_circulating_supply": "None",
+    "self_reported_market_cap": "None",
+    "tvl_ratio": "None",
+    "last_updated": "2023-12-01T07:09:00.000Z",
+    "quote": {
+        "USD": {
+            "price": 228.766184614026,
+            "volume_24h": 590104461.9704267,
+            "volume_change_24h": -3.8897,
+            "percent_change_1h": -0.10029472,
+            "percent_change_24h": 0.20398068,
+            "percent_change_7d": -2.59260223,
+            "percent_change_30d": 1.81480495,
+            "percent_change_60d": 4.37031939,
+            "percent_change_90d": 6.72511453,
+            "market_cap": 34703536742.67845,
+            "market_cap_dominance": 2.4076,
+            "fully_diluted_market_cap": 34703536742.68,
+            "tvl": "None",
+            "last_updated": "2023-12-01T07:09:00.000Z"
+        }
+    }
+}
 
 
 
