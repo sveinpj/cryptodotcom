@@ -148,27 +148,42 @@ def get_ticker(instrument_name):
     informations = requests.get(BASE_URL + "public/get-ticker?instrument_name=" + instrument_name)
     informations = json.loads(informations.text)
     return informations['result']['data'][-1]
-      # h = data['h']
-      # l = data['l']
-      # a = data['a']
-      # i = data['i']
-      # v = data['v']
-      # vv = data['vv']
-      # c = data['c']
-      # b = data['b']
-      # k = data['k']
-      # t = data['t']
-    # for item in informations:
-    #   print (item)
-    # return informations['result']['data'][-1]
 
-def simpleticker():
-    btc_usd = get_ticker("BTC_USD")
-    #print (btc_usd)
-    # print (btc_usd)
+class CryptodotcomCollector():
+  # def __init__(self):
+  #   a = 0
+  def collect(self):
+    with lock:
+      log.info('collecting...')
+      base_url = 'https://api.crypto.com/v2/public/get-instruments'
+      response = requests.get(base_url)
+      if response.status_code == 200:
+        metric = Metric('coin_market', 'coinmarketcap metric values', 'gauge')
+        data = response.json()
+        instruments = data.get('result', {}).get('instruments', [])[:3]
+        for instrument in instruments:
+          instrument_name = (instrument['instrument_name'])
+          quote_currency = (instrument['quote_currency'])
+          base_currency = (instrument['base_currency'])
+          max_quantity = (instrument['max_quantity'])
+          ticker = get_ticker(instrument_name)
+          instrument_name         = ticker['i']   # Instrument name
+          price_higest_trade_24h  = ticker['h']   # Price of the 24h highest trade
+          price_lowest_trade_24h  = ticker['l']   # Price of the 24h lowest trade, null if there weren't any trades
+          price                   = ticker['a']   # The price of the latest trade, null if there weren't any trades
+          traded_volume_24h       = ticker['v']   # The total 24h traded volume
+          traded_volume_24h_usd   = ticker['vv'] # The total 24h traded volume value (in USD)
+          price_change_24h        = ticker['c']   # 24-hour price change, null if there weren't any trades
+          best_bid_price          = ticker['b']   # The current best bid price, null if there aren't any bids
+          best_ask_price          = ticker['k']   # The current best ask price, null if there aren't any asks
+          log.info(instrument_name)
+          coinmarketmetric = '_'.join(['cryptodotcom_market', 'price_higest_trade_24h']).lower()
+          metric.add_sample(coinmarketmetric, value=float(ticker['h']), labels={'id': ticker['i']})  
+        # for that in ['price_higest_trade_24h','price_lowest_trade_24h','price']:
+        #   coinmarketmetric = '_'.join(['coin_market', that, 55]).lower()
+        #   metric.add_sample(coinmarketmetric, value=float(ticker[that]), labels={'id': data['i']})
+          yield metric
 
-# simpleticker()
-# exit(0)
 
 def get_instruments():
     # headers = {
@@ -176,11 +191,10 @@ def get_instruments():
     # 'Authorization': f'Bearer {API_KEY}'
     # }
     base_url = 'https://api.crypto.com/v2/public/get-instruments'
-    # Fetch the list of symbols
     response = requests.get(base_url)
-    informations = json.loads(response.text)
-    # print (informations)
+
     if response.status_code == 200:
+       metric = Metric('coin_market', 'coinmarketcap metric values', 'gauge')
        data = response.json()
        instruments = data.get('result', {}).get('instruments', [])
       #  symbols = [instrument['instrument_name'] for instrument in instruments]
@@ -189,43 +203,57 @@ def get_instruments():
         quote_currency = (instrument['quote_currency'])
         base_currency = (instrument['base_currency'])
         max_quantity = (instrument['max_quantity'])
+        
         ticker = get_ticker(instrument_name)
-        h = ticker['h']   # Price of the 24h highest trade
-        l = ticker['l']   # Price of the 24h lowest trade, null if there weren't any trades
-        a = ticker['a']   # The price of the latest trade, null if there weren't any trades
-        i = ticker['i']   # Instrument name
-        v = ticker['v']   # The total 24h traded volume
-        vv = ticker['vv'] # The total 24h traded volume value (in USD)
-        # oi = ticker['oi'] # Open interest
-        c = ticker['c']   # 24-hour price change, null if there weren't any trades
-        b = ticker['b']   # The current best bid price, null if there aren't any bids
-        k = ticker['k']   # The current best ask price, null if there aren't any asks
-        t = ticker['t']   # Timestamp
-        print (max_quantity)
+        instrument_name         = ticker['i']   # Instrument name
+        price_higest_trade_24h  = ticker['h']   # Price of the 24h highest trade
+        price_lowest_trade_24h  = ticker['l']   # Price of the 24h lowest trade, null if there weren't any trades
+        price                   = ticker['a']   # The price of the latest trade, null if there weren't any trades
+        traded_volume_24h       = ticker['v']   # The total 24h traded volume
+        traded_volume_24h_usd   = ticker['vv'] # The total 24h traded volume value (in USD)
+        price_change_24h        = ticker['c']   # 24-hour price change, null if there weren't any trades
+        best_bid_price          = ticker['b']   # The current best bid price, null if there aren't any bids
+        best_ask_price          = ticker['k']   # The current best ask price, null if there aren't any asks
+        # t = ticker['t']   # Timestamp
 
-get_instruments()
-exit()
-class CoinCollector():
-  def __init__(self):
-     a = 1
+             
+        for that in ['price_higest_trade_24h','price_lowest_trade_24h','price']:
+          coinmarketmetric = '_'.join(['coin_market', that, 55]).lower()
+          metric.add_sample(coinmarketmetric, value=float(ticker[that]), labels={'id': data['i']})
+        # coinmarketmetric = '_'.join(['coin_market', that, price]).lower()
+        # metric.add_sample(coinmarketmetric, value=float(data['h']), labels={'id': data['i']})
+        # crypto_com_pricehigh_24h{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 51790.00
+        # crypto_com_pricelow_24h{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 47895.50
+        # crypto_com_pricelatest{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 51174.500000
+        # crypto_com_volume_24h{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 879.5024
+        # crypto_com_volume_24h_usd{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 26370000.12
+        # crypto_com_open_interest{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 12345.12
+        # crypto_com_change_24h{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 0.03955106
+        # crypto_com_current_best_bid{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 51170.000000
+        # crypto_com_current_best_ask{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 51180.000000
+        yield metric
+
+# class CoinCollector():
+#   def __init__(self):
+#      a = 1
     
-#     self.client = CoinClient()
-  def collect(self):
-     with lock:
-      instrument_name = "BTC_USD"
-      metric = Metric('coin_market', 'coinmarketcap metric values', 'gauge')
-      informations = requests.get(BASE_URL + "public/get-ticker?instrument_name=" + instrument_name)
-      informations = json.loads(informations.text)
-      id = informations['id']
-      method = informations['method']
-      code = informations['code']
-      data = informations['result']['data'][-1]
-      for price in ['USD']:
-        for that in ['a', 'v', 'i']:
-          coinmarketmetric = '_'.join(['coin_market', that, price]).lower()
-          metric.add_sample(coinmarketmetric, value=float(data['h']), labels={'id': data['i']})
-          print (metric)
-      yield metric
+# #     self.client = CoinClient()
+#   def collect(self):
+#      with lock:
+#       instrument_name = "BTC_USD"
+#       metric = Metric('coin_market', 'coinmarketcap metric values', 'gauge')
+#       informations = requests.get(BASE_URL + "public/get-ticker?instrument_name=" + instrument_name)
+#       informations = json.loads(informations.text)
+#       id = informations['id']
+#       method = informations['method']
+#       code = informations['code']
+#       data = informations['result']['data'][-1]
+#       for price in ['USD']:
+#         for that in ['a', 'v', 'i']:
+#           coinmarketmetric = '_'.join(['coin_market', that, price]).lower()
+#           metric.add_sample(coinmarketmetric, value=float(data['h']), labels={'id': data['i']})
+#           print (metric)
+#       yield metric
 #       response = self.client.tickers()
 #       metric = Metric('coin_market', 'coinmarketcap metric values', 'gauge')
 if __name__ == '__main__':
@@ -236,7 +264,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     log.info('listening on http://%s:%d/metrics' % (args.addr, args.port))
 
-    REGISTRY.register(CoinCollector())
+    REGISTRY.register(CryptodotcomCollector())
     start_http_server(int(args.port), addr=args.addr)
 
     while True:

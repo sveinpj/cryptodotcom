@@ -20,7 +20,7 @@ coin_market_percent_change_1h_usd{id="bnb",name="BNB",symbol="BNB"} 0.02918713
 coin_market_percent_change_24h_usd{id="bnb",name="BNB",symbol="BNB"} 0.71950936
 coin_market_percent_change_7d_usd{id="bnb",name="BNB",symbol="BNB"} -2.24513012
 
-new:
+new:  
 crypto_com_pricehigh_24h{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 51790.00
 crypto_com_pricelow_24h{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 47895.50
 crypto_com_pricelatest{id="btcusd-perp",name="BTCUSD-PERP",instrument="BTCUSD-PERP"} 51174.500000
