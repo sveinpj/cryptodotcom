@@ -145,18 +145,9 @@ cache = TTLCache(maxsize=10000, ttl=cache_ttl)
 #     return informations['result']['data'][-1]
 
 def get_ticker(instrument_name):
-    metric = Metric('coin_market', 'coinmarketcap metric values', 'gauge')
     informations = requests.get(BASE_URL + "public/get-ticker?instrument_name=" + instrument_name)
     informations = json.loads(informations.text)
-    id = informations['id']
-    method = informations['method']
-    code = informations['code']
-    data = informations['result']['data'][-1]
-    for price in ['USD']:
-      for that in ['a', 'v', 'i']:
-        coinmarketmetric = '_'.join(['coin_market', that, price]).lower()
-        metric.add_sample(coinmarketmetric, value=float(data['h']), labels={'id': data['i']})
-    yield metric
+    return informations['result']['data'][-1]
       # h = data['h']
       # l = data['l']
       # a = data['a']
@@ -188,19 +179,32 @@ def get_instruments():
     # Fetch the list of symbols
     response = requests.get(base_url)
     informations = json.loads(response.text)
+    # print (informations)
     if response.status_code == 200:
        data = response.json()
        instruments = data.get('result', {}).get('instruments', [])
-       symbols = [instrument['instrument_name'] for instrument in instruments]
-    #    return symbols
-    #    print("List of symbols:")
-    #    var = "[]"
-       for symbol in symbols:
-           latest_ticker = get_ticker(symbol)
-           print (latest_ticker)
-        #    latest_candlestick = get_candlestick(symbol,"M5")
-        #    print(latest_candlestick)
+      #  symbols = [instrument['instrument_name'] for instrument in instruments]
+       for instrument in instruments:
+        instrument_name = (instrument['instrument_name'])
+        quote_currency = (instrument['quote_currency'])
+        base_currency = (instrument['base_currency'])
+        max_quantity = (instrument['max_quantity'])
+        ticker = get_ticker(instrument_name)
+        h = ticker['h']   # Price of the 24h highest trade
+        l = ticker['l']   # Price of the 24h lowest trade, null if there weren't any trades
+        a = ticker['a']   # The price of the latest trade, null if there weren't any trades
+        i = ticker['i']   # Instrument name
+        v = ticker['v']   # The total 24h traded volume
+        vv = ticker['vv'] # The total 24h traded volume value (in USD)
+        # oi = ticker['oi'] # Open interest
+        c = ticker['c']   # 24-hour price change, null if there weren't any trades
+        b = ticker['b']   # The current best bid price, null if there aren't any bids
+        k = ticker['k']   # The current best ask price, null if there aren't any asks
+        t = ticker['t']   # Timestamp
+        print (max_quantity)
 
+get_instruments()
+exit()
 class CoinCollector():
   def __init__(self):
      a = 1
