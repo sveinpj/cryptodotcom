@@ -41,13 +41,17 @@ class instrumentscollector():
         data = response.json()
         instruments = data.get('result', {}).get('instruments', [])#[:3]
         return instruments
+      elif response.status_code == 502:
+        log.error('Instruments failure - 502 - Bad Gateway...')
+      elif response.status_code == 504:
+        log.error('Instruments failure - 504 - Gateway timeout...')
       else:
-        log.error('Failure - Error getting API of instrumentscollector.')
+        log.error('Instruments failure - Error getting API of instrumentscollector.')
         log.info(response.status_code)
     except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
-      log.error(f"Failure - Unable to establish connection: {e}.")
+      log.error(f"Instruments exception failure - Unable to establish connection: {e}.")
     except Exception as e:
-      log.error(f"Failure - Unknown error occurred: {e}.")
+      log.error(f"Instruments exception failure - Unknown error occurred: {e}.")
 
 class tickerinfo():
   def __init__(self,instrument):
@@ -67,27 +71,36 @@ class tickerinfo():
         self.best_bid_price = result['b']
         self.best_ask_price = result['k']
         self.laststatus = "ok"
+      elif informations.status_code == 502:
+        log.error('Tickerinfo failure - 502 - Bad Gateway...')
+      elif informations.status_code == 504:
+        log.error('Tickerinfo failure - 504 - Gateway timeout...')
+      elif informations.status_code == 522:
+        log.error('Tickerinfo failure - 522 - Connection timeout...')
+      elif informations.status_code == 524:
+        log.error('Tickerinfo failure - 524 - A Timout Occured...')
       else:
-        log.error('Failure - Error getting API of tickerinfo.')
+        log.error('Tickerinf failure - Error getting API of tickerinfo.')
         log.info(informations.status_code)
         self.laststatus = "error"
     except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
-      log.error(f"Failure - Unable to establish connection: {e}.")
+      log.error(f"Tickerinfo exception failure - Unable to establish connection: {e}.")
     except Exception as e:
-      log.error(f"Failure - Unknown error occurred: {e}.")
+      log.error(f"Tickerinfo exception failure - Unknown error occurred: {e}.")
 
 class CryptodotcomCollector():
   def __init__(self):
     self.client = instrumentscollector()
   def collect(self):
     with lock:
-      log.info('collecting...')
+      log.info('collecting instruments...')
       # query the api
       instruments = self.client.getinstruments()
       metric = Metric('crypto_com_marked', 'crypto.com metric values', 'gauge')
       if 'instrument_name' not in instruments[0]:
         log.error('Halting getting instrument in instruments.')
       else:
+        log.info('collecting tickerinfo...')
         for instrument in instruments:
           ticker = tickerinfo((instrument['instrument_name']))
           if ticker.laststatus == "error":
