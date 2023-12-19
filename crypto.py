@@ -28,6 +28,7 @@ BASE_URL = "https://api.crypto.com/v2/"
 cache_ttl = os.environ.get('CACHE_TTL', 3000)
 cache_ttl = 300
 cache = TTLCache(maxsize=10000, ttl=cache_ttl)
+tickercache = TTLCache(maxsize=10000, ttl=cache_ttl)
 
 class instrumentscollector():
   def __init__(self):
@@ -54,6 +55,7 @@ class instrumentscollector():
       log.error(f"Instruments exception failure - Unknown error occurred: {e}.")
 
 class tickerinfo():
+  @cached(tickercache)
   def __init__(self,instrument):
     baseurl = 'https://api.crypto.com/v2/'
     try:
@@ -70,15 +72,19 @@ class tickerinfo():
         self.price_change_24h = result['c']
         self.best_bid_price = result['b']
         self.best_ask_price = result['k']
-        self.laststatus = "ok"
+        self.laststatus = "200"
       elif informations.status_code == 502:
         log.error('Tickerinfo failure - 502 - Bad Gateway...')
+        self.laststatus = "502"
       elif informations.status_code == 504:
         log.error('Tickerinfo failure - 504 - Gateway timeout...')
+        self.laststatus = "504"
       elif informations.status_code == 522:
         log.error('Tickerinfo failure - 522 - Connection timeout...')
+        self.laststatus = "522"
       elif informations.status_code == 524:
         log.error('Tickerinfo failure - 524 - A Timout Occured...')
+        self.laststatus = "524"
       else:
         log.error('Tickerinf failure - Error getting API of tickerinfo.')
         log.info(informations.status_code)
@@ -93,18 +99,19 @@ class CryptodotcomCollector():
     self.client = instrumentscollector()
   def collect(self):
     with lock:
-      log.info('collecting instruments...')
+      log.info('Collecting instruments...')
       # query the api
       instruments = self.client.getinstruments()
+      log.info('Done collecting instruments...')
       metric = Metric('crypto_com_marked', 'crypto.com metric values', 'gauge')
       if 'instrument_name' not in instruments[0]:
         log.error('Halting getting instrument in instruments.')
       else:
-        log.info('collecting tickerinfo...')
+        log.info('Collecting tickerinfo...')
         for instrument in instruments:
           ticker = tickerinfo((instrument['instrument_name']))
-          if ticker.laststatus == "error":
-            log.error('Halting getting coinmarketmetric')
+          if ticker.laststatus != "200":
+            log.error(f"Halting getting coinmarketmetric - {ticker.laststatus}")
           else:
             if ticker.price_higest_trade_24h is not None:
               coinmarketmetric = '_'.join(['crypto_com_marked', 'price_higest_trade_24h']).lower()
@@ -131,6 +138,7 @@ class CryptodotcomCollector():
               coinmarketmetric = '_'.join(['crypto_com_marked', 'best_ask_price']).lower()
               metric.add_sample(coinmarketmetric, value=float(ticker.best_ask_price), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
             yield metric
+        log.info('Done collecting tickerinfo...')
 
 if __name__ == '__main__':
   try:
