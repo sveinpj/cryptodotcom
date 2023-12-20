@@ -36,11 +36,17 @@ class instrumentscollector():
 
   @cached(cache)
   def getinstruments(self):
+    session = Session()
     try:
-      response = requests.get(self.base_url)
+      response = session.get(self.base_url)
       if response.status_code == 200:
-        data = response.json()
-        instruments = data.get('result', {}).get('instruments', [])#[:3]
+        instruments = json.loads(response.text)
+        if 'result' not in instruments:
+          log.error('No data in response. Is your API key set?')
+          log.info(instruments)
+        # data = response.json()
+        instruments = instruments['result']['instruments']
+        #instruments = instruments.get('result', {}).get('instruments')#[:3]
         self.laststatus = "ok"
         return instruments
       elif response.status_code == 502:
@@ -50,12 +56,14 @@ class instrumentscollector():
       else:
         log.error('Instruments failure - Error getting API of instrumentscollector.')
         log.info(response.status_code)
-    except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
-      log.error(f"Instruments exception failure - Unable to establish connection: {e}.")
-      self.laststatus = "error"
-    except Exception as e:
-      log.error(f"Instruments exception failure - Unknown error occurred: {e}.")
-      self.laststatus = "error"
+    except ConnectionError as exception:    # This is the correct syntax
+      return exception
+    except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as exception:
+      # log.error(f"Instruments exception failure - Unable to establish connection: {exception}.")
+      return exception
+    except Exception as exception:
+      # log.error(f"Instruments exception failure - Unknown error occurred: {exception}.")
+      return exception
 
 class tickerinfo():
   @cached(tickercache)
@@ -93,10 +101,10 @@ class tickerinfo():
         log.info(informations.status_code)
         self.laststatus = "error"
     except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
-      log.error(f"Tickerinfo exception failure - Unable to establish connection: {e}.")
+      # log.error(f"Tickerinfo exception failure - Unable to establish connection: {e}.")
       self.laststatus = "error"
     except Exception as e:
-      log.error(f"Tickerinfo exception failure - Unknown error occurred: {e}.")
+      # log.error(f"Tickerinfo exception failure - Unknown error occurred: {e}.")
       self.laststatus = "error"
 
 class CryptodotcomCollector():
@@ -107,44 +115,40 @@ class CryptodotcomCollector():
       log.info('Collecting instruments...')
       # query the api
       instruments = self.client.getinstruments()
-      # if instruments.laststatus != "ok":
-      #   log.error('Halting getting instruments')
-      # else:
-      log.info(instruments.laststatus)
-      log.info('Done collecting instruments...')
-      metric = Metric('crypto_com_marked', 'crypto.com metric values', 'gauge')
-      log.info('Collecting tickerinfo...')
-      for instrument in instruments:
-        ticker = tickerinfo((instrument['instrument_name']))
-        # if ticker.laststatus != "ok":
-        #   log.error(f"Halting getting coinmarketmetric - {ticker.laststatus}")
-        # else:
-        if ticker.price_higest_trade_24h is not None:
-          coinmarketmetric = '_'.join(['crypto_com_marked', 'price_higest_trade_24h']).lower()
-          metric.add_sample(coinmarketmetric, value=float(ticker.price_higest_trade_24h), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
-        if ticker.price_lowest_trade_24h is not None:
-          coinmarketmetric = '_'.join(['crypto_com_marked', 'price_lowest_trade_24h']).lower()
-          metric.add_sample(coinmarketmetric, value=float(ticker.price_lowest_trade_24h), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
-        if ticker.price is not None:
-          coinmarketmetric = '_'.join(['crypto_com_marked', 'price']).lower()
-          metric.add_sample(coinmarketmetric, value=float(ticker.price), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
-        if ticker.traded_volume_24h is not None:
-          coinmarketmetric = '_'.join(['crypto_com_marked', 'traded_volume_24h']).lower()
-          metric.add_sample(coinmarketmetric, value=float(ticker.traded_volume_24h), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
-        if ticker.traded_volume_24h_usd is not None:
-          coinmarketmetric = '_'.join(['crypto_com_marked', 'traded_volume_24h_usd']).lower()
-          metric.add_sample(coinmarketmetric, value=float(ticker.traded_volume_24h_usd), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
-        if ticker.price_change_24h is not None:
-          coinmarketmetric = '_'.join(['crypto_com_marked', 'price_change_24h']).lower()
-          metric.add_sample(coinmarketmetric, value=float(ticker.price_change_24h), labels={'id': (ticker.instrument_name).lower(),'name': instrument['base_currency']})
-        if ticker.best_bid_price is not None:
-          coinmarketmetric = '_'.join(['crypto_com_marked', 'best_bid_price']).lower()
-          metric.add_sample(coinmarketmetric, value=float(ticker.best_bid_price), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
-        if ticker.best_ask_price is not None:
-          coinmarketmetric = '_'.join(['crypto_com_marked', 'best_ask_price']).lower()
-          metric.add_sample(coinmarketmetric, value=float(ticker.best_ask_price), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
-        yield metric
-    log.info('Done collecting tickerinfo...')
+      if 'instrument_name' not in instruments[0]:
+        print("Not Hi")
+      else:
+        log.info('Done collecting instruments...')
+        metric = Metric('crypto_com_marked', 'crypto.com metric values', 'gauge')
+        log.info('Collecting tickerinfo...')
+        for instrument in instruments:
+          ticker = tickerinfo((instrument['instrument_name']))
+          if ticker.price_higest_trade_24h is not None:
+            coinmarketmetric = '_'.join(['crypto_com_marked', 'price_higest_trade_24h']).lower()
+            metric.add_sample(coinmarketmetric, value=float(ticker.price_higest_trade_24h), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
+          if ticker.price_lowest_trade_24h is not None:
+            coinmarketmetric = '_'.join(['crypto_com_marked', 'price_lowest_trade_24h']).lower()
+            metric.add_sample(coinmarketmetric, value=float(ticker.price_lowest_trade_24h), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
+          if ticker.price is not None:
+            coinmarketmetric = '_'.join(['crypto_com_marked', 'price']).lower()
+            metric.add_sample(coinmarketmetric, value=float(ticker.price), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
+          if ticker.traded_volume_24h is not None:
+            coinmarketmetric = '_'.join(['crypto_com_marked', 'traded_volume_24h']).lower()
+            metric.add_sample(coinmarketmetric, value=float(ticker.traded_volume_24h), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
+          if ticker.traded_volume_24h_usd is not None:
+            coinmarketmetric = '_'.join(['crypto_com_marked', 'traded_volume_24h_usd']).lower()
+            metric.add_sample(coinmarketmetric, value=float(ticker.traded_volume_24h_usd), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
+          if ticker.price_change_24h is not None:
+            coinmarketmetric = '_'.join(['crypto_com_marked', 'price_change_24h']).lower()
+            metric.add_sample(coinmarketmetric, value=float(ticker.price_change_24h), labels={'id': (ticker.instrument_name).lower(),'name': instrument['base_currency']})
+          if ticker.best_bid_price is not None:
+            coinmarketmetric = '_'.join(['crypto_com_marked', 'best_bid_price']).lower()
+            metric.add_sample(coinmarketmetric, value=float(ticker.best_bid_price), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
+          if ticker.best_ask_price is not None:
+            coinmarketmetric = '_'.join(['crypto_com_marked', 'best_ask_price']).lower()
+            metric.add_sample(coinmarketmetric, value=float(ticker.best_ask_price), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
+          yield metric
+      log.info('Done collecting tickerinfo...')
 
 if __name__ == '__main__':
   try:
