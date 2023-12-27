@@ -34,7 +34,7 @@ class instrumentscollector():
   log.info('Step into instrumentscollector')
   def __init__(self):
     # self.base_url = 'https://api.crypto.com/v2/public/get-instruments'
-    self.base_url = 'http://headers.jsontest.com/'
+    self.base_url = 'https://instruments.minimedaillon.no'
     log.info('Step after class instrumentscollector, before cache')
 
   @cached(cache)
@@ -42,7 +42,7 @@ class instrumentscollector():
     log.info('Session')
     session = Session()
     try:
-      response = session.get(self.base_url,timeout=5)
+      response = session.get(self.base_url + "/v2/public/get-instruments/",timeout=5)
       if response.status_code == 200:
         log.info('Status 200')
         instruments = json.loads(response.text)
