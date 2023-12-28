@@ -32,13 +32,14 @@ tickercache = TTLCache(maxsize=10000, ttl=cache_ttl)
 
 class instrumentscollector():
   def __init__(self):
-    self.base_url = 'https://api.crypto.com/v2/public/get-instruments'
-
+    self.base_url = 'https://api.crypto.com'
+    self.headers = {'Accepts': 'application/json'}
   @cached(cache)
   def getinstruments(self):
     session = Session()
+    session.headers.update(self.headers)
     try:
-      response = session.get(self.base_url)
+      response = session.get(self.base_url + "/v2/public/get-instruments/") 
       if response.status_code == 200:
         instruments = json.loads(response.text)
         if 'result' not in instruments:
