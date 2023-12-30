@@ -26,7 +26,7 @@ SECRET_KEY = ""
 # BASE_URL = "https://api.crypto.com/v2/"
 
 cache_ttl = os.environ.get('CACHE_TTL', 3000)
-cache_ttl = 300
+cache_ttl = 60
 cache = TTLCache(maxsize=10000, ttl=cache_ttl)
 tickercache = TTLCache(maxsize=10000, ttl=cache_ttl)
 
@@ -41,22 +41,29 @@ class instrumentscollector():
   def getinstruments(self):
     log.info('Session')
     session = Session()
-    try:
-      response = session.get(self.base_url + "/v2/public/get-instruments/",timeout=5)
-      if response.status_code == 200:
-        log.info('Status 200')
-        instruments = json.loads(response.text)
-        # instruments = instruments['result']['instruments']
-        return instruments
-    except ConnectionError as exception:    # This is the correct syntax
-      log.error('Got a exception 1')
-      return exception
-    except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as exception:
-      log.error('Got a exception 2')
-      return exception
-    except Exception as exception:
-      log.error('Got a exception 3')
-      return exception
+    r = session.get(self.base_url + "/v2/public/get-instruments/",timeout=5)
+    if r.status_code == 200:
+      log.info("Got 200")
+      return r
+    else:
+      log.error("Got other than 200")
+
+    # try:
+    #   response = session.get(self.base_url + "/v2/public/get-instruments/",timeout=5)
+    #   if response.status_code == 200:
+    #     log.info('Status 200')
+    #     instruments = json.loads(response.text)
+    #     # instruments = instruments['result']['instruments']
+    #     return instruments
+    # except ConnectionError as exception:    # This is the correct syntax
+    #   log.error('Got a exception 1')
+    #   return exception
+    # except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as exception:
+    #   log.error('Got a exception 2')
+    #   return exception
+    # except Exception as exception:
+    #   log.error('Got a exception 3')
+    #   return exception
 
 class CryptodotcomCollector():
   def __init__(self):
@@ -67,9 +74,12 @@ class CryptodotcomCollector():
       log.info('Collecting instruments...')
       # query the api
       instruments = self.collector.getinstruments()
-      print(instruments)
-      log.info('End of line')
-      yield metric
+      if instruments is None:
+        log.error("Data is none")
+      else:
+        print(instruments)
+        log.info('End of line')
+        yield metric
 
 if __name__ == '__main__':
   try:
@@ -84,7 +94,7 @@ if __name__ == '__main__':
 
     while True:
       log.info('Start Sleep')
-      time.sleep(60)
+      time.sleep(30)
       log.info('End Sleep')
   except KeyboardInterrupt:
     print(" Interrupted")
