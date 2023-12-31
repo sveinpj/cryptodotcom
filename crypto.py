@@ -26,7 +26,7 @@ SECRET_KEY = ""
 BASE_URL = "https://api.crypto.com/v2/"
 
 cache_ttl = os.environ.get('CACHE_TTL', 3000)
-cache_ttl = 300
+cache_ttl = 600
 cache = TTLCache(maxsize=10000, ttl=cache_ttl)
 # tickercache = TTLCache(maxsize=10000, ttl=cache_ttl)
 
