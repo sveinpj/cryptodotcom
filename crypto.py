@@ -46,7 +46,7 @@ class instrumentscollector():
         if 'result' not in instruments:
           log.error('No data in response. Is your API key set?')
           log.info(instruments)
-        instruments = instruments['result']['instruments'][:3] # Test to have 3 records 
+        instruments = instruments['result']['instruments'] # [:3] # Test to have 3 records 
         self.laststatus = "ok"
         return instruments
       else:
