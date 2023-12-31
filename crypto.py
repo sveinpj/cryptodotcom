@@ -39,13 +39,14 @@ class instrumentscollector():
     session = Session()
     session.headers.update(self.headers)
     try:
-      response = session.get(self.base_url + "/v2/public/get-instruments/") 
+      log.info('Collecting instruments...')
+      response = session.get(self.base_url + "/v2/public/get-instruments/",timeout=10) 
       if response.status_code == 200:
         instruments = json.loads(response.text)
         if 'result' not in instruments:
           log.error('No data in response. Is your API key set?')
           log.info(instruments)
-        instruments = instruments['result']['instruments'] # [:3] # Test to have 3 records 
+        instruments = instruments['result']['instruments'][:3] # Test to have 3 records 
         self.laststatus = "ok"
         return instruments
       else:
@@ -61,7 +62,7 @@ class tickerinfo():
   def __init__(self,instrument):
     baseurl = 'https://api.crypto.com/v2/'
     try:
-      informations = requests.get(baseurl + "public/get-ticker?instrument_name=" + instrument)
+      informations = requests.get(baseurl + "public/get-ticker?instrument_name=" + instrument,timeout=10)
       if informations.status_code == 200:
         informations_json = json.loads(informations.text)
         result = informations_json['result']['data'][-1]
@@ -91,7 +92,7 @@ class CryptodotcomCollector():
     self.client = instrumentscollector()
   def collect(self):
     with lock:
-      log.info('Collecting instruments...')
+      # log.info('Collecting instruments...')
       instruments = self.client.getinstruments()
       if instruments == None:
         log.error('Could not get collect instruments')
@@ -131,6 +132,7 @@ class CryptodotcomCollector():
                 coinmarketmetric = '_'.join(['crypto_com_marked', 'best_ask_price']).lower()
                 metric.add_sample(coinmarketmetric, value=float(ticker.best_ask_price), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
               yield metric
+          log.info("Done collecting tickerinfo...")
 
 if __name__ == '__main__':
   try:
