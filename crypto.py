@@ -3,6 +3,7 @@ from threading import Lock
 from cachetools import cached, TTLCache
 from requests import Request, Session
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
+from platform import system
 import argparse
 import json
 import requests
@@ -10,9 +11,9 @@ import logging
 import os
 import sys
 import time
-# lock of the collect method
 lock = Lock()
 
+osversion = system()
 # logging setup
 log = logging.getLogger('crypto.com-exporter')
 log.setLevel(logging.INFO)
@@ -21,18 +22,15 @@ ch.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 log.addHandler(ch)
-API_KEY = ""
-SECRET_KEY = ""
-BASE_URL = "https://api.crypto.com/v2/"
+BASE_URL = "https://api.crypto.com"
 
-cache_ttl = os.environ.get('CACHE_TTL', 3000)
-cache_ttl = 600
-cache = TTLCache(maxsize=10000, ttl=cache_ttl)
-# tickercache = TTLCache(maxsize=10000, ttl=cache_ttl)
+cache_ttl = os.environ.get('CACHE_TTL', 1800)
+cache = TTLCache(maxsize=10000, ttl=int(cache_ttl))
+testing = os.environ.get('TESTING', "true")
 
 class instrumentscollector():
   def __init__(self):
-    self.base_url = 'https://api.crypto.com'
+    self.base_url = BASE_URL
     self.headers = {'Accepts': 'application/json'}
   @cached(cache)
   def getinstruments(self):
@@ -44,25 +42,40 @@ class instrumentscollector():
       if response.status_code == 200:
         instruments = json.loads(response.text)
         if 'result' not in instruments:
-          log.error('No data in response. Is your API key set?')
-          log.info(instruments)
-        instruments = instruments['result']['instruments'] # [:3] # Test to have 3 records 
-        self.laststatus = "ok"
-        return instruments
+          log.error('Instruments failure. No json data in response')
+        else:
+          if testing == "false":
+            instruments = instruments['result']['instruments']
+          else:
+             instruments = instruments['result']['instruments'][:3] # Test to have 3 records
+          self.laststatus = "ok"
+          if osversion == "Windows":
+            filename = "instruments.txt"
+          else:
+            filename = "/tmp/instruments.txt"
+          #Write instruments to file if needed to check if processes halted.
+          if os.path.exists(filename):
+            os.remove(filename)
+            f = open(filename, "a")
+            f.write(str(instruments))
+            f.close()
+          else:
+            f = open(filename, "a")
+            f.write(str(instruments))
+            f.close()
+          return instruments
       else:
-        log.error('Instruments failure - Error getting API of instrumentscollector.')
-        log.info(response.status_code)
+        log.error(f"Instruments failure - Error getting API. Error {response.status_code}")
     except ConnectionError as exception:
       log.error(f"Instruments exception - ConnectionError")
     except Timeout as exception:
       log.error(f"Instruments exception - Timeout")
 
 class tickerinfo():
-  # @cached(tickercache)
   def __init__(self,instrument):
-    baseurl = 'https://api.crypto.com/v2/'
+    baseurl = BASE_URL
     try:
-      informations = requests.get(baseurl + "public/get-ticker?instrument_name=" + instrument,timeout=10)
+      informations = requests.get(baseurl + "/v2/public/get-ticker?instrument_name=" + instrument,timeout=10)
       if informations.status_code == 200:
         informations_json = json.loads(informations.text)
         result = informations_json['result']['data'][-1]
@@ -77,14 +90,11 @@ class tickerinfo():
         self.best_ask_price = result['k']
         self.laststatus = "ok"
       else:
-        log.error('Tickerinf failure - Error getting API of tickerinfo.')
-        log.info(informations.status_code)
+        log.error(f"Tickerinfo failure - Error getting API of {instrument}. Error {informations.status_code}")
         self.laststatus = "error"
-    except ConnectionError as exception:    # This is the correct syntax
-      # log.error(f"Tickerinfo exception - ConnectionError")
+    except ConnectionError as exception:
       self.laststatus = "error"
     except Timeout as exception:
-      # log.error(f"Tickerinfo exception - Timeout")
       self.laststatus = "error"
 
 class CryptodotcomCollector():
@@ -92,10 +102,9 @@ class CryptodotcomCollector():
     self.client = instrumentscollector()
   def collect(self):
     with lock:
-      # log.info('Collecting instruments...')
       instruments = self.client.getinstruments()
       if instruments == None:
-        log.error('Could not get collect instruments')
+        log.error('Could not collect instruments')
       else:
         if 'instrument_name' not in instruments[0]:
           log.error("No instrument_name in collection of instruments")
@@ -105,8 +114,6 @@ class CryptodotcomCollector():
           for instrument in instruments:
             ticker = tickerinfo((instrument['instrument_name']))
             if ticker.laststatus == "ok":
-              # log.error(f'Could not get collect tickerinfo {instrument['instrument_name']}')
-            # else:
               if ticker.price_higest_trade_24h is not None:
                 coinmarketmetric = '_'.join(['crypto_com_marked', 'price_higest_trade_24h']).lower()
                 metric.add_sample(coinmarketmetric, value=float(ticker.price_higest_trade_24h), labels={'id': (ticker.instrument_name).lower(),'quote_currency': instrument['quote_currency'],'name': instrument['base_currency']})
